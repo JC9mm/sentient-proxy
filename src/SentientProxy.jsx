@@ -8,53 +8,50 @@ const flagModules = import.meta.glob('./assets/flags-png/stack*/**/*.png', {
 
 const allFlags = Object.values(flagModules);
 
+const getRandomEdgePosition = () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const side = Math.floor(Math.random() * 4);
+
+  switch (side) {
+    case 0: return [Math.random() * width, 0]; // top
+    case 1: return [width, Math.random() * height]; // right
+    case 2: return [Math.random() * width, height]; // bottom
+    default: return [0, Math.random() * height]; // left
+  }
+};
+
+const getRandomFlag = () => {
+  const src = allFlags[Math.floor(Math.random() * allFlags.length)];
+  const [x, y] = getRandomEdgePosition();
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const angleIn = Math.atan2(centerY - y, centerX - x);
+  const speed = (0.3 + Math.random() * 0.4) * 1.15;
+  const id = Math.random().toString(36).slice(2);
+
+  return {
+    id,
+    src,
+    x,
+    y,
+    dx: Math.cos(angleIn) * speed,
+    dy: Math.sin(angleIn) * speed,
+    outbound: false,
+    bounceCount: 0,
+    ttl: 1200 + Math.floor(Math.random() * 500),
+    fadeOut: false,
+    fadeInFrames: 60, // new fade-in flag
+    speed,
+  };
+};
+
 export default function SentientProxy() {
   const containerRef = useRef(null);
   const [frame, setFrame] = useState(0);
-  const [activeFlags, setActiveFlags] = useState([]);
-
-  const getRandomEdgePosition = () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const side = Math.floor(Math.random() * 4);
-
-    switch (side) {
-      case 0: return [Math.random() * width, 0]; // top
-      case 1: return [width, Math.random() * height]; // right
-      case 2: return [Math.random() * width, height]; // bottom
-      default: return [0, Math.random() * height]; // left
-    }
-  };
-
-  const getRandomFlag = () => {
-    const src = allFlags[Math.floor(Math.random() * allFlags.length)];
-    const [x, y] = getRandomEdgePosition();
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const angleIn = Math.atan2(centerY - y, centerX - x);
-    const speed = (0.3 + Math.random() * 0.4) * 1.15;
-    const id = Math.random().toString(36).slice(2);
-
-    return {
-      id,
-      src,
-      x,
-      y,
-      dx: Math.cos(angleIn) * speed,
-      dy: Math.sin(angleIn) * speed,
-      outbound: false,
-      bounceCount: 0,
-      ttl: 1200 + Math.floor(Math.random() * 500),
-      fadeOut: false,
-      fadeInFrames: 60, // new fade-in flag
-      speed,
-    };
-  };
-
-  useEffect(() => {
-    const initialFlags = Array.from({ length: 25 }, getRandomFlag);
-    setActiveFlags(initialFlags);
-  }, []);
+  const [activeFlags, setActiveFlags] = useState(() =>
+    Array.from({ length: 25 }, getRandomFlag)
+  );
 
   useEffect(() => {
     let animationId;
@@ -107,7 +104,7 @@ export default function SentientProxy() {
       animationId = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
   }, []);
 
